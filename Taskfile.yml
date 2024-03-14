@@ -1,0 +1,34 @@
+version: "3"
+
+vars:
+  LEC_TOOL_GIT_URL: https://github.com/MODERATE-Project/lec-location-assessment-tool.git
+  LEC_TOOL_TREEISH: main
+  GEOSERVER_DATA_DIR: '{{default "/opt/geoserver/data_dir" .GEOSERVER_DATA_DIR}}'
+
+tasks:
+  download-lec-tool-data:
+    desc: Clone the LEC tool repository and copy the data to the GeoServer data directory
+    vars:
+      TEMP_REPO_DIR:
+        sh: mktemp -d
+    cmds:
+      - git clone {{.LEC_TOOL_GIT_URL}} {{.TEMP_REPO_DIR}}
+      - defer: rm -rf {{.TEMP_REPO_DIR}}
+      - cd {{.TEMP_REPO_DIR}}
+      - git checkout {{.LEC_TOOL_TREEISH}}
+      - mkdir -p {{.GEOSERVER_DATA_DIR}}
+      - mkdir -p {{.GEOSERVER_DATA_DIR}}/data
+      - mkdir -p {{.GEOSERVER_DATA_DIR}}/workspaces
+      - >
+        cp -r
+        {{.TEMP_REPO_DIR}}/geoserver_data/data/municipalities
+        {{.GEOSERVER_DATA_DIR}}/data
+      - >
+        cp -r
+        {{.TEMP_REPO_DIR}}/geoserver_data/workspaces/moderate_municipios
+        {{.GEOSERVER_DATA_DIR}}/workspaces
+
+  download-geoserver-data:
+    desc: Download and prepare the GeoServer init data
+    cmds:
+      - task: download-lec-tool-data
